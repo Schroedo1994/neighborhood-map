@@ -1,43 +1,39 @@
 // ***** MODEL ******
+
 var locations = ko.observableArray([{
-        title: 'Villa Amarilla',
+        title: 'Empire State Building',
         location: {
-            lat: 53.851782,
-            lng: 10.690741
+            lat: 40.748380,
+            lng: -73.985686
         },
-        visibility: true
     },
     {
-        title: 'Edeka',
+        title: 'Pennsylvania Station',
         location: {
-            lat: 53.853263,
-            lng: 10.699552
+            lat: 40.750359,
+            lng: -73.993248
         },
-        visibility: true
     },
     {
-        title: 'Old Appartment',
+        title: 'The Morgan',
         location: {
-            lat: 53.850747,
-            lng: 10.695349
+            lat: 40.749447,
+            lng: -73.981408
         },
-        visibility: true
     },
     {
-        title: 'Kolloseum',
+        title: 'Banana Republic',
         location: {
-            lat: 53.854943,
-            lng: 10.688857
+            lat: 40.749152,
+            lng: -73.985691
         },
-        visibility: true
     },
     {
-        title: 'Bakery Junge',
+        title: 'Herald Towers',
         location: {
-            lat: 53.849327,
-            lng: 10.686381
+            lat: 40.749426,
+            lng: -73.987282
         },
-        visibility: true
     }
 ]);
 
@@ -52,29 +48,20 @@ function mapViewModel() {
     var filter = self.filter().toLowerCase();
 
         return ko.utils.arrayFilter(locations(), function(location) {
+
             if (location.title.toLowerCase().indexOf(filter) > -1) {
                 location.visibility === true;
+                if (location.marker) {
+                  location.marker.setVisible(true);
+                }
                 return true;
             } else {
                 location.visibility === false;
+                location.marker.setVisible(false);
                 return false;
             }
         });
     });
-
-
-  //  self.userinput = ko.observable("");
-
-  /*  self.placesFiltered = ko.computed(function() {
-    return ko.utils.arrayFilter(this.locations(), function(location) {
-        if (location.title === self.userinput()) {
-          return location.visibility === true;
-        } else {
-          return location.visibility === false;
-        }
-
-    });
-});*/
 
     self.showSelectedMarker = function(location) {
         var infowindow = new google.maps.InfoWindow({
@@ -222,11 +209,10 @@ var initMap = function() {
         }]
     }];
 
-    // Constructor creates a new map - only center and zoom are required.
     map = new google.maps.Map(document.getElementById('map'), {
         center: {
-            lat: 53.851782,
-            lng: 10.690741
+            lat: 40.748380,
+            lng: -73.985686
         },
         zoom: 15,
         styles: styles,
@@ -247,8 +233,11 @@ var initMap = function() {
 
         markers.push(marker);
 
+        locations()[i].marker = marker;
+
         var infowindow = new google.maps.InfoWindow({
             content: locations()[i].title
+
         })
         marker.addListener("click", function() {
             showInfoWindow(this, infowindow);
@@ -268,11 +257,41 @@ function toggleMarker(marker) {
     }
 }
 
+var urls = [];
+var headers = [];
+var snippets = [];
+
+var loaddata = function () {
+  for (var i = 0; i < locations().length; i++) {
+
+  var locationTitle = locations()[i].title;
+
+  var nytAPIUrl = "http://api.nytimes.com/svc/search/v2/articlesearch.json?q=" + locationTitle + "&sort=newest&api-key=355f67db9079418ea4d60df829f7df18";
+
+  $.getJSON(nytAPIUrl, function (data) {
+
+    var articles = data.response.docs;
+    var article = articles[0];
+    urls.push(article.web_url);
+    urls.push(article.headline.main);
+    urls.push(article.snippet)
+  })
+  locations()[i].url = urls[i];
+  console.log(locationTitle);
+}
+}
+//WAS JETZT NOCH FEHLT IST DIE INFO AN DEN JEWEILIGEN MARKER ZU HÄNGEN!
+
+loaddata();
+
 function showInfoWindow(marker, infowindow) {
+
+
+    var contentstring = "<div>" + marker.title + "</br>" + "" + "</div>";
     // Check to make sure the infowindow is not already opened on this marker.
     if (infowindow.marker != marker) {
         infowindow.marker = marker;
-        infowindow.setContent('<div>' + marker.title + '</div>');
+        infowindow.setContent(contentstring);
         infowindow.open(map, marker);
         // Make sure the marker property is cleared if the infowindow is closed.
         infowindow.addListener('closeclick', function() {
@@ -283,6 +302,8 @@ function showInfoWindow(marker, infowindow) {
         });
     }
 }
+
+
 
 // init viewModel functionality
 var vm = new mapViewModel();

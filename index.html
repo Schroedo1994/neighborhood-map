@@ -16,7 +16,7 @@
 
         <input id="user-input" data-bind="textInput: filter" type="text" value="Type here">
 
-        <ul class="locations" data-bind="foreach: locations">
+        <ul class="locations" data-bind="foreach: filteredPlaces">
           <li class="listings"  data-bind="text: title, click: $parent.showSelectedMarker, $parent.visible: showMarker"> </li>
         </ul>
       </div>
